@@ -142,6 +142,8 @@ export async function getSheetData(): Promise<SheetData> {
     eventDate,
     eventTime: cfg['hora_evento'] ?? '',
     mapsUrl: cfg['maps_url'] ?? '',
+    address: cfg['direccion'] ?? '',
+    introMessage: cfg['mensaje_intro'] ?? '',
   }
 
   // Regalos: row 1 is headers, data from row 2

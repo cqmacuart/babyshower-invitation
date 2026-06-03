@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Gift as GiftIcon, Banknote, Phone, Mail, User } from "lucide-react";
-import type { Gift } from "@/lib/invitation.functions";
+import type { Gift } from "@/lib/types";
 
 export type RsvpData = {
   nombre: string;
@@ -14,8 +14,9 @@ export type RsvpData = {
 
 const CASH_GIFT: Gift = {
   id: "cash",
-  nombre: "Regalo en efectivo",
-  descripcion: "Contribución directa para la nueva familia",
+  title: "Regalo en efectivo",
+  description: "Contribución directa para la nueva familia",
+  status: "Available",
 };
 
 export function RsvpFlow({
@@ -45,16 +46,12 @@ export function RsvpFlow({
       setError("Necesitamos tu nombre y teléfono");
       return;
     }
-    if (attending && !selectedGift) {
-      setError("Selecciona un regalo (o el regalo en efectivo)");
-      return;
-    }
     await onSubmit({
       nombre: form.nombre.trim(),
       telefono: form.telefono.trim(),
       email: form.email.trim(),
       regaloId: selectedGift?.id ?? "",
-      regaloNombre: selectedGift?.nombre ?? "",
+      regaloNombre: selectedGift?.title ?? "",
       attending,
     });
   };
@@ -70,7 +67,7 @@ export function RsvpFlow({
           </span>
         </div>
         <p className="mb-4 text-sm italic text-ink-soft">
-          Selecciona uno (opcional).
+          Si deseas, selecciona un detalle de la lista para llevar (opcional).
         </p>
         <div className="grid grid-cols-2 gap-3">
           {allGifts.map((g) => {
@@ -103,9 +100,9 @@ export function RsvpFlow({
                     <GiftIcon className="h-5 w-5 text-ink" />
                   )}
                 </div>
-                <p className="font-display text-sm text-ink">{g.nombre}</p>
-                {g.descripcion && (
-                  <p className="mt-1 text-xs text-ink-soft">{g.descripcion}</p>
+                <p className="font-display text-sm text-ink">{g.title}</p>
+                {g.description && (
+                  <p className="mt-1 text-xs text-ink-soft">{g.description}</p>
                 )}
               </button>
             );
@@ -195,7 +192,7 @@ export function RsvpFlow({
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-2xl bg-butter py-5 font-display text-xl text-ink shadow-xl transition-transform active:scale-95 disabled:opacity-60"
+            className="w-full rounded-2xl bg-butter py-5 font-display text-xl text-ink shadow-xl transition-transform active:scale-95 disabled:opacity-50"
           >
             {submitting ? "Enviando..." : "Confirmar"}
           </button>

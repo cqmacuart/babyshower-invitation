@@ -5,6 +5,8 @@ export interface SheetMetadata {
   eventDate: string
   eventTime: string
   mapsUrl: string
+  address?: string
+  introMessage?: string
 }
 
 export interface Gift {

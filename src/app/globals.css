@@ -1,63 +1,269 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-cream: #FFF8F0;
-  --color-lavender-light: #EDE9FF;
-  --color-lavender: #C9B8F5;
-  --color-lavender-dark: #4A3F6B;
-  --color-pink-light: #FFE4EE;
-  --color-pink: #F5C0D0;
-  --color-pink-dark: #9B4F6B;
-  --color-mint-light: #E4FFF4;
-  --color-mint: #B8F0D8;
-  --color-mint-dark: #2E7A5A;
-  --color-yellow-light: #FFFBE4;
-  --color-yellow: #F5ECBA;
-  --color-yellow-dark: #7A6A2E;
-  --color-teal-light: #E4F8FF;
-  --color-teal: #B8E4F0;
-  --color-teal-dark: #2E6A7A;
+    --color-lilac: #c9a8e0;
+    --color-lilac-soft: #e0bbe4;
+    --color-soft-pink: #ffdfd3;
+    --color-pink: #f6c6d0;
+    --color-pink-deep: #e89aaa;
+    --color-mint: #bfe3d4;
+    --color-mint-soft: #d4f0f0;
+    --color-peach: #fec8d8;
+    --color-butter: #fff6bd;
+    --color-cream: #fbf7f0;
+    --color-ink: #3e3a4d;
+    --color-ink-soft: #7a748a;
+
+    --font-display: var(--font-display), system-ui, sans-serif;
+    --font-body: var(--font-clean), system-ui, sans-serif;
 }
 
+/* ── Fonts ── */
+.font-handwritten {
+    font-family: 'Dancing Script', cursive;
+}
+
+.font-clean {
+    font-family: 'Quicksand', sans-serif;
+}
+
+/* ── Watercolor background ── */
+.watercolor-bg {
+    background:
+        radial-gradient(circle at 15% 25%, rgba(254, 243, 199, 0.55) 0%, transparent 48%),
+        radial-gradient(circle at 82% 15%, rgba(252, 231, 243, 0.65) 0%, transparent 45%),
+        radial-gradient(circle at 50% 85%, rgba(224, 231, 255, 0.5) 0%, transparent 55%),
+        #FFFDF9;
+}
+
+/* ── Scrollbar hide ── */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* ── Keyframes ── */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-12px);
+    }
 }
 
 @keyframes float-slow {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
 }
 
 @keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
+@keyframes waxPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 4px 8px rgba(219, 39, 119, 0.3));
+    }
+
+    50% {
+        transform: scale(1.08);
+        filter: drop-shadow(0 10px 18px rgba(219, 39, 119, 0.52));
+    }
+}
+
+@keyframes balloonFloat {
+
+    0%,
+    100% {
+        transform: translateY(0px) rotate(-1deg);
+    }
+
+    50% {
+        transform: translateY(-22px) rotate(1deg);
+    }
+}
+
+@keyframes cloudDrift {
+
+    0%,
+    100% {
+        transform: translateX(0px);
+    }
+
+    50% {
+        transform: translateX(14px);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
+}
+
+@keyframes starPop {
+    0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.3) rotate(20deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes balloon-rise {
+    0% {
+        transform: translateY(100vh) scale(0.8);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-20vh) scale(1.1);
+        opacity: 0;
+    }
+}
+
+@keyframes pulse-soft {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* ── Utility animations ── */
+.animate-wax-pulse {
+    animation: waxPulse 3s infinite ease-in-out;
+}
+
+.animate-balloon-float {
+    animation: balloonFloat 5s infinite ease-in-out;
+}
+
+.animate-cloud-drift {
+    animation: cloudDrift 8s infinite ease-in-out;
+}
+
+.animate-pulse-soft {
+    animation: pulse-soft 2s infinite ease-in-out;
+}
+
+.animate-star-pop {
+    animation: starPop 0.5s ease-out forwards;
+}
+
+/* ── Sparkle shimmer effect ── */
+.shimmer-text {
+    background: linear-gradient(90deg, #C9B8F5, #F5C0D0, #F5ECBA, #B8F0D8, #C9B8F5);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+}
+
+/* ── Wax seal ── */
+.wax-seal {
+    animation: waxPulse 3s infinite ease-in-out;
+}
+
+/* ── Base ── */
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
 }
 
 body {
-  font-family: var(--font-sans), system-ui, sans-serif;
-  background-color: #FFF8F0;
-  overflow-x: hidden;
+    font-family: var(--font-body), system-ui, sans-serif;
+    background-color: #fbf7f0;
+    color: var(--color-ink);
+    overflow-x: hidden;
+    /* Wallpaper: Classic Nursery Vertical Stripes */
+    background-image: linear-gradient(90deg,
+            #fbf7f0 0%,
+            #fbf7f0 50%,
+            #f7f3ed 50%,
+            #f7f3ed 100%);
+    background-size: 60px 100%;
 }
 
-h1, h2, h3 {
-  font-family: var(--font-serif), Georgia, serif;
+/* Layer for Baby Icons Pattern */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    opacity: .1;
+    /* Slightly more visible as requested */
+    background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20 c0-5 5-5 5 0 c0 5-5 5-5 0' fill='%23c9a8e0' /%3E%3Cpath d='M80 30 c0-3 3-3 3 0 c0 3-3 3-3 0' fill='%23f6c6d0' /%3E%3Ccircle cx='50' cy='50' r='2' fill='%23bfe3d4' /%3E%3Cpath d='M30 80 l3-3 l3 3 l-3 3 z' fill='%23c9a8e0' /%3E%3Cpath d='M70 75 c0-4 4-4 4 0 c0 4-4 4-4 0' fill='%23f6c6d0' /%3E%3C/svg%3E");
+    background-size: 200px 200px;
+    pointer-events: none;
 }
 
+h1,
+h2,
+h3 {
+    font-family: var(--font-display), Georgia, serif;
+}
+
+/* ── Layout ── */
 .invitation-container {
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
 }
 
 @media (min-width: 768px) {
-  body {
-    background-image:
-      radial-gradient(circle at 20% 50%, #EDE9FF 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, #FFE4EE 0%, transparent 40%);
-  }
+    body {
+        background-image:
+            radial-gradient(circle at 20% 50%, #EDE9FF 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, #FFE4EE 0%, transparent 40%);
+    }
 }
