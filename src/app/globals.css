@@ -1,26 +1,63 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-cream: #FFF8F0;
+  --color-lavender-light: #EDE9FF;
+  --color-lavender: #C9B8F5;
+  --color-lavender-dark: #4A3F6B;
+  --color-pink-light: #FFE4EE;
+  --color-pink: #F5C0D0;
+  --color-pink-dark: #9B4F6B;
+  --color-mint-light: #E4FFF4;
+  --color-mint: #B8F0D8;
+  --color-mint-dark: #2E7A5A;
+  --color-yellow-light: #FFFBE4;
+  --color-yellow: #F5ECBA;
+  --color-yellow-dark: #7A6A2E;
+  --color-teal-light: #E4F8FF;
+  --color-teal: #B8E4F0;
+  --color-teal-dark: #2E6A7A;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  background-color: #FFF8F0;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.invitation-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  body {
+    background-image:
+      radial-gradient(circle at 20% 50%, #EDE9FF 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, #FFE4EE 0%, transparent 40%);
+  }
 }

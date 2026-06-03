@@ -1,65 +1,196 @@
-import Image from "next/image";
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { useInvitationStore } from '@/hooks/useInvitationStore'
+import { useSheetData } from '@/hooks/useSheetData'
+import { useAudio } from '@/hooks/useAudio'
+import { CloudMask } from '@/components/ui/CloudMask'
+import { IntroGate } from '@/components/IntroGate'
+import { CountdownTimer } from '@/components/CountdownTimer'
+import { ParentsPhoto } from '@/components/ParentsPhoto'
+import { DateTimeLocation } from '@/components/DateTimeLocation'
+import { GiftRegistry } from '@/components/GiftRegistry'
+import { RSVPSection } from '@/components/RSVPSection'
+import { CelebrationBanner } from '@/components/CelebrationBanner'
+import { OfflineScreen } from '@/components/OfflineScreen'
+import type { GuestInfo } from '@/lib/types'
 
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+  const { mode, selectedGiftId, guestInfo, setMode, setSelectedGift, setGuestInfo } =
+    useInvitationStore()
+
+  const { data, loading, error, refetch } = useSheetData()
+  const audio = useAudio(mode === 'celebration')
+
+  const [showIntro, setShowIntro] = useState(true)
+  const [cloudVisible, setCloudVisible] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+
+  // Skip intro if already in celebration mode
+  useEffect(() => {
+    if (mode === 'celebration') {
+      setShowIntro(false)
+    }
+  }, [mode])
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 4000)
+  }, [])
+
+  const handleEnter = useCallback(() => {
+    audio.unlockAndPlay()
+    // Cloud wipe out animation
+    setCloudVisible(true)
+    setTimeout(() => {
+      setShowIntro(false)
+      setCloudVisible(false)
+    }, 1200)
+  }, [audio])
+
+  const triggerConfetti = useCallback(async () => {
+    const confetti = (await import('canvas-confetti')).default
+    confetti({
+      particleCount: 180,
+      spread: 160,
+      origin: { y: 0.6 },
+      colors: ['#C9B8F5', '#F5C0D0', '#B8F0D8', '#F5ECBA', '#B8E4F0'],
+    })
+    setTimeout(() => {
+      confetti({ particleCount: 80, spread: 100, origin: { y: 0.4 } })
+    }, 600)
+  }, [])
+
+  const handleAttend = useCallback(
+    async (info: GuestInfo) => {
+      // Resolve gift name for the sheet
+      const giftName =
+        selectedGiftId === 'cash'
+          ? 'Regalo en efectivo'
+          : (data?.gifts.find((g) => g.id === selectedGiftId)?.title ?? '')
+
+      // Submit RSVP to Confirmaciones sheet
+      const rsvpRes = await fetch('/api/submit-rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guestInfo: info,
+          giftId: selectedGiftId ?? '',
+          giftName,
+        }),
+      })
+
+      if (!rsvpRes.ok) {
+        showToast('Hubo un error al confirmar tu asistencia. Intenta de nuevo.')
+        return
+      }
+
+      // Claim gift in Regalos sheet (only physical gifts, not cash)
+      if (selectedGiftId && selectedGiftId !== 'cash') {
+        const claimRes = await fetch('/api/claim-gift', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ giftId: selectedGiftId, guestInfo: info }),
+        })
+
+        if (claimRes.status === 409) {
+          showToast('Este regalo ya fue tomado, elige otro.')
+          setSelectedGift(null)
+          return
+        }
+      }
+
+      setGuestInfo(info)
+      setMode('celebration')
+      audio.switchToCelebration()
+      await triggerConfetti()
+    },
+    [data, selectedGiftId, setMode, setGuestInfo, setSelectedGift, audio, triggerConfetti, showToast]
+  )
+
+  // "No Asistiré" — we just record the local UI state; the sheet schema
+  // doesn't have an attendance column so we skip the API call.
+  const handleDecline = useCallback(async (_name: string) => {
+    // no-op: Confirmaciones only tracks attending guests
+  }, [])
+
+  // Loading state
+  if (loading && !data) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: '#FFF8F0' }}
+      >
+        <div
+          className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin"
+          style={{ borderColor: '#C9B8F5', borderTopColor: 'transparent' }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return <OfflineScreen onRetry={refetch} />
+  }
+
+  return (
+    <>
+      {/* Cloud wipe transition */}
+      <CloudMask isVisible={cloudVisible} />
+
+      {/* Toast notification */}
+      {toast && (
+        <div
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-white text-sm shadow-lg max-w-xs text-center"
+          style={{ backgroundColor: '#9B4F6B' }}
+        >
+          {toast}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      )}
+
+      {showIntro ? (
+        <IntroGate
+          onEnter={handleEnter}
+          babyName={data?.metadata.babyName}
+        />
+      ) : (
+        <div className="invitation-container">
+          {data && (
+            <>
+              <CountdownTimer targetDate={data.metadata.eventDate} />
+              <ParentsPhoto parentA={data.metadata.parentA} parentB={data.metadata.parentB} />
+              <DateTimeLocation
+                eventDate={data.metadata.eventDate}
+                eventTime={data.metadata.eventTime}
+                mapsUrl={data.metadata.mapsUrl}
+              />
+              <GiftRegistry
+                gifts={data.gifts}
+                onGiftSelect={setSelectedGift}
+                selectedGiftId={selectedGiftId}
+                disabled={mode === 'celebration'}
+              />
+              {mode !== 'celebration' && (
+                <RSVPSection
+                  mode={mode}
+                  selectedGiftId={selectedGiftId}
+                  onAttend={handleAttend}
+                  onDecline={handleDecline}
+                  initialGuestInfo={guestInfo ?? undefined}
+                />
+              )}
+              {mode === 'celebration' && guestInfo && (
+                <CelebrationBanner
+                  guestName={guestInfo.name}
+                  gifts={data.gifts}
+                  onGiftSelect={setSelectedGift}
+                  selectedGiftId={selectedGiftId}
+                />
+              )}
+            </>
+          )}
         </div>
-      </main>
-    </div>
-  );
+      )}
+    </>
+  )
 }
