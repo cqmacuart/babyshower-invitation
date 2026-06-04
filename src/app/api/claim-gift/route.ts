@@ -1,9 +1,14 @@
-import { claimGift } from '@/lib/sheets'
+import { claimGift, updateConfirmacionGift } from '@/lib/sheets'
 
 export async function POST(req: Request) {
-  const { giftId, guestInfo } = await req.json()
+  const { giftId, guestInfo, confirmacionRow, giftName } = await req.json()
   try {
-    await claimGift(giftId, guestInfo)
+    if (giftId !== 'cash') {
+      await claimGift(giftId, guestInfo)
+    }
+    if (confirmacionRow) {
+      await updateConfirmacionGift(confirmacionRow, String(giftId), giftName ?? '')
+    }
     return Response.json({ success: true })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'UNKNOWN'

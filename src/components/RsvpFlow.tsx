@@ -10,6 +10,7 @@ export type RsvpData = {
   regaloId: string;
   regaloNombre: string;
   attending: boolean;
+  asistentes: number;
 };
 
 const CASH_GIFT: Gift = {
@@ -23,17 +24,24 @@ export function RsvpFlow({
   gifts,
   onSubmit,
   submitting,
+  defaultValues,
 }: {
   gifts: Gift[];
   onSubmit: (data: RsvpData) => Promise<void> | void;
   submitting: boolean;
+  defaultValues?: { nombre?: string; telefono?: string; email?: string };
 }) {
   const [attending, setAttending] = useState<boolean | null>(null);
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
-  const [form, setForm] = useState({ nombre: "", telefono: "", email: "" });
+  const [form, setForm] = useState({
+    nombre: defaultValues?.nombre ?? "",
+    telefono: defaultValues?.telefono ?? "",
+    email: defaultValues?.email ?? "",
+  });
+  const [asistentes, setAsistentes] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
-  const allGifts = [...gifts, CASH_GIFT];
+  const allGifts = [CASH_GIFT, ...gifts.filter((g) => g.status === 'Available')];
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -53,6 +61,7 @@ export function RsvpFlow({
       regaloId: selectedGift?.id ?? "",
       regaloNombre: selectedGift?.title ?? "",
       attending,
+      asistentes,
     });
   };
 
@@ -63,7 +72,7 @@ export function RsvpFlow({
         <div className="mb-5 flex items-end justify-between">
           <h3 className="font-display text-2xl text-ink">Lista de regalos</h3>
           <span className="rounded-full bg-pink/20 px-3 py-1 font-mono text-xs text-pink-deep">
-            {gifts.length} disponibles
+            {allGifts.length - 1} disponibles
           </span>
         </div>
         <p className="mb-4 text-sm italic text-ink-soft">
@@ -175,6 +184,37 @@ export function RsvpFlow({
               className="w-full bg-transparent text-white placeholder:text-white/60 focus:outline-none"
             />
           </Field>
+
+          {/* Separador */}
+          <div className="flex items-center gap-3 opacity-40">
+            <div className="flex-1 h-px bg-white" />
+          </div>
+
+          {/* Número de asistentes */}
+          <div className="flex items-center justify-between rounded-2xl border border-white/30 bg-white/20 px-5 py-4">
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-white">¿Cuántos asistirán?</span>
+              <span className="text-xs text-white/60">Inclúyete a ti</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setAsistentes((n) => Math.max(1, n - 1))}
+                disabled={asistentes <= 1}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white font-bold text-lg leading-none transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                −
+              </button>
+              <span className="w-5 text-center font-bold text-white text-base">{asistentes}</span>
+              <button
+                type="button"
+                onClick={() => setAsistentes((n) => n + 1)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white font-bold text-lg leading-none transition-all active:scale-90"
+              >
+                +
+              </button>
+            </div>
+          </div>
 
           <AnimatePresence>
             {error && (

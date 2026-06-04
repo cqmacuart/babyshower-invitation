@@ -13,7 +13,7 @@ export function ForegroundClouds() {
       duration: 25 + Math.random() * 12,
       delay: i * 7,
       size: 1100 + Math.random() * 500,
-      opacity: 0.3 + Math.random() * 0.15,
+      opacity: 0.2 + Math.random() * 0.15,
       // Movimiento diagonal leve para mayor naturalidad
       exitY: `${(Math.random() - 0.5) * 200}px`, 
     }))

@@ -6,6 +6,7 @@ export interface SheetMetadata {
   eventTime: string
   mapsUrl: string
   address?: string
+  coordinates?: string
   introMessage?: string
 }
 

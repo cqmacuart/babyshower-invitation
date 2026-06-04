@@ -100,6 +100,24 @@ async function sheetsGet(range: string, token: string) {
   return res.json() as Promise<{ values?: string[][] }>
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+async function tryExtractCoordinates(mapsUrl: string): Promise<string> {
+  if (!mapsUrl) return ''
+  try {
+    const res = await fetch(mapsUrl, {
+      redirect: 'follow',
+      signal: AbortSignal.timeout(3000),
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+    })
+    const match = res.url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+    if (match) return `${match[1]},${match[2]}`
+  } catch {}
+  return ''
+}
+
 // ── Public API ─────────────────────────────────────────────────────────────────
 
 /*
@@ -135,15 +153,19 @@ export async function getSheetData(): Promise<SheetData> {
   const rawDate = cfg['fecha_evento'] ?? ''
   const eventDate = rawDate.split(' ')[0] ?? rawDate  // "2026-08-15"
 
+  const rawMapsUrl = cfg['maps_url'] ?? ''
+  const coordinates = cfg['coordenadas'] || await tryExtractCoordinates(rawMapsUrl)
+
   const metadata: SheetMetadata = {
     parentA: cfg['madre_nombre'] ?? '',
     parentB: cfg['padre_nombre'] ?? '',
     babyName: cfg['bebe_nombre'] ?? '',
     eventDate,
     eventTime: cfg['hora_evento'] ?? '',
-    mapsUrl: cfg['maps_url'] ?? '',
+    mapsUrl: rawMapsUrl,
     address: cfg['direccion'] ?? '',
     introMessage: cfg['mensaje_intro'] ?? '',
+    coordinates,
   }
 
   // Regalos: row 1 is headers, data from row 2
@@ -204,17 +226,76 @@ export async function claimGift(
   return { success: true }
 }
 
+export async function updateConfirmacionGift(
+  rowIndex: number,
+  giftId: string,
+  giftName: string,
+): Promise<void> {
+  const token = await getAccessToken()
+  const spreadsheetId = process.env.GOOGLE_SHEET_ID!
+  const range = `Confirmaciones!D${rowIndex}:E${rowIndex}`
+
+  const res = await fetch(
+    `${SHEETS_BASE}/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: [[giftId, giftName]] }),
+    }
+  )
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`updateConfirmacionGift PUT failed: ${res.status} — ${body}`)
+  }
+}
+
+export async function updateRSVP(
+  rowIndex: number,
+  guestInfo: GuestInfo,
+  giftId?: string,
+  giftName?: string,
+  asistentes?: number,
+): Promise<void> {
+  const token = await getAccessToken()
+  const spreadsheetId = process.env.GOOGLE_SHEET_ID!
+  const range = `Confirmaciones!A${rowIndex}:G${rowIndex}`
+
+  const res = await fetch(
+    `${SHEETS_BASE}/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        values: [[
+          guestInfo.name,
+          guestInfo.phone,
+          guestInfo.email ?? '',
+          giftId ?? '',
+          giftName ?? '',
+          new Date().toISOString(),
+          asistentes ?? 1,
+        ]],
+      }),
+    }
+  )
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`updateRSVP PUT failed: ${res.status} — ${body}`)
+  }
+}
+
 export async function appendRSVP(
   guestInfo: GuestInfo,
   giftId?: string,
   giftName?: string,
+  asistentes?: number,
 ): Promise<{ success: true; rowIndex: number }> {
   const token = await getAccessToken()
   const spreadsheetId = process.env.GOOGLE_SHEET_ID!
 
-  // Confirmaciones: nombre, telefono, email, regalo_id, regalo_nombre, fecha
+  // Confirmaciones: nombre, telefono, email, regalo_id, regalo_nombre, fecha, asistentes
   const res = await fetch(
-    `${SHEETS_BASE}/${spreadsheetId}/values/${encodeURIComponent('Confirmaciones!A:F')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    `${SHEETS_BASE}/${spreadsheetId}/values/${encodeURIComponent('Confirmaciones!A:G')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
     {
       method: 'POST',
       headers: {
@@ -229,6 +310,7 @@ export async function appendRSVP(
           giftId ?? '',
           giftName ?? '',
           new Date().toISOString(),
+          asistentes ?? 1,
         ]],
       }),
     }
