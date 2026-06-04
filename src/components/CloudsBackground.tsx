@@ -1,77 +1,62 @@
 'use client'
 
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useMemo } from 'react'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 export function CloudsBackground() {
-  const { scrollYProgress } = useScroll()
+  const isMobile = useIsMobile()
 
-  // Parallax offsets for different layers
-  const drift1 = useTransform(scrollYProgress, [0, 1], [0, -200])
-  const drift2 = useTransform(scrollYProgress, [0, 1], [0, -100])
-  const drift3 = useTransform(scrollYProgress, [0, 1], [0, -50])
-
-  // Generate random configurations for background clouds to avoid "the line" look
   const backgroundClouds = useMemo(() => {
-    return Array.from({ length: 12 }).map((_, i) => ({
-      top: `${Math.random() * 100}%`,
-      duration: 60 + Math.random() * 120,
-      opacity: 0.15 + Math.random() * 0.25,
-      size: 140 + Math.random() * 120,
-      delay: Math.random() * -180, // Negative delay to start at different points in the animation
+    const count = isMobile ? 5 : 12
+    return Array.from({ length: count }).map((_, i) => ({
+      top: `${(i / count) * 110 - 5}%`,
+      duration: 60 + i * 15,
+      opacity: 0.12 + (i % 3) * 0.06,
+      size: 140 + (i % 4) * 40,
+      delay: -(i * 18),
     }))
-  }, [])
+  }, [isMobile])
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden overflow-y-hidden">
-      {/* Layer 1: Far background - chaotic infinite drift (Left to Right) + Scroll Parallax */}
-      <motion.div style={{ y: drift1 }} className="absolute inset-0">
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      {/* Drifting clouds — no scroll parallax, compositor-only transforms */}
+      <div className="absolute inset-0">
         {backgroundClouds.map((c, i) => (
           <InfiniteCloud key={i} {...c} />
         ))}
-      </motion.div>
+      </div>
 
-      {/* Layer 2: Middle background - subtle bobbing + Scroll Parallax */}
-      <motion.div style={{ y: drift2 }} className="absolute inset-0">
-        <FloatingCloud className="absolute top-[15%] -left-12 w-44 opacity-60" delay={0} />
-        <FloatingCloud className="absolute top-[40%] -right-16 w-60 opacity-40" delay={-4} />
-        <FloatingCloud className="absolute top-[65%] left-1/4 w-48 opacity-50" delay={-8} />
-        <FloatingCloud className="absolute top-[90%] right-[10%] w-40 opacity-45" delay={-12} />
-      </motion.div>
+      {/* Floating accent clouds — only on desktop */}
+      {!isMobile && (
+        <div className="absolute inset-0">
+          <FloatingCloud className="absolute top-[15%] -left-12 w-44 opacity-60" delay={0} />
+          <FloatingCloud className="absolute top-[40%] -right-16 w-60 opacity-40" delay={-4} />
+          <FloatingCloud className="absolute top-[65%] left-1/4 w-48 opacity-50" delay={-8} />
+          <FloatingCloud className="absolute top-[90%] right-[10%] w-40 opacity-45" delay={-12} />
+        </div>
+      )}
 
-      {/* Layer 3: Interactive/Foreground - sparkles + Scroll Parallax */}
-      <motion.div style={{ y: drift3 }} className="absolute inset-0">
-        <Sparkles />
-      </motion.div>
+      {/* Sparkles — only on desktop */}
+      {!isMobile && (
+        <div className="absolute inset-0">
+          <Sparkles />
+        </div>
+      )}
     </div>
   )
 }
 
-function InfiniteCloud({
-  top,
-  duration,
-  opacity,
-  size,
-  delay,
-}: {
-  top: string
-  duration: number
-  opacity: number
-  size: number
-  delay: number
+function InfiniteCloud({ top, duration, opacity, size, delay }: {
+  top: string; duration: number; opacity: number; size: number; delay: number
 }) {
   return (
     <motion.div
       className="absolute"
-      style={{ top, opacity, width: size }}
+      style={{ top, opacity, width: size, willChange: 'transform' }}
       initial={{ x: '-120%' }}
       animate={{ x: '110vw' }}
-      transition={{
-        duration,
-        repeat: Infinity,
-        ease: 'linear',
-        delay,
-      }}
+      transition={{ duration, repeat: Infinity, ease: 'linear', delay }}
     >
       <PremiumCloudSVG />
     </motion.div>
@@ -82,17 +67,9 @@ function FloatingCloud({ className, delay }: { className: string; delay: number 
   return (
     <motion.div
       className={className}
-      animate={{
-        x: [0, 50, 0],
-        y: [0, -25, 0],
-        rotate: [-1.5, 1.5, -1.5],
-      }}
-      transition={{
-        duration: 22,
-        repeat: Infinity,
-        ease: 'easeInOut',
-        delay,
-      }}
+      style={{ willChange: 'transform' }}
+      animate={{ x: [0, 50, 0], y: [0, -25, 0], rotate: [-1.5, 1.5, -1.5] }}
+      transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut', delay }}
     >
       <PremiumCloudSVG />
     </motion.div>
@@ -134,16 +111,8 @@ function Sparkles() {
           key={i}
           className="absolute h-1.5 w-1.5 rounded-full bg-butter/60 blur-[1px]"
           style={{ top: p.top, left: (p as any).left, right: (p as any).right }}
-          animate={{
-            opacity: [0.1, 0.8, 0.1],
-            scale: [1, 1.5, 1],
-          }}
-          transition={{
-            duration: 4 + Math.random() * 3,
-            repeat: Infinity,
-            delay: p.delay,
-            ease: 'easeInOut',
-          }}
+          animate={{ opacity: [0.1, 0.8, 0.1], scale: [1, 1.5, 1] }}
+          transition={{ duration: 4 + i * 0.4, repeat: Infinity, delay: p.delay, ease: 'easeInOut' }}
         />
       ))}
     </>

@@ -2,22 +2,22 @@
 
 import { motion } from 'framer-motion'
 import { useMemo } from 'react'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 export function ForegroundClouds() {
-  // Configuración de nubes MASIVAS con distribución vertical total
+  const isMobile = useIsMobile()
+
   const foregroundClouds = useMemo(() => {
-    return Array.from({ length: 4 }).map((_, i) => ({
+    const count = isMobile ? 2 : 4
+    return Array.from({ length: count }).map((_, i) => ({
       id: i,
-      // Distribuir en todo el alto de la pantalla (de 0% a 90%)
-      top: `${(i * 25) + Math.random() * 15}%`, 
-      duration: 25 + Math.random() * 12,
-      delay: i * 7,
-      size: 1100 + Math.random() * 500,
-      opacity: 0.2 + Math.random() * 0.15,
-      // Movimiento diagonal leve para mayor naturalidad
-      exitY: `${(Math.random() - 0.5) * 200}px`, 
+      top: `${(i * 30) + 5}%`,
+      duration: 28 + i * 8,
+      delay: -(i * 7),
+      size: isMobile ? 700 + i * 150 : 1100 + i * 150,
+      opacity: isMobile ? 0.12 + i * 0.04 : 0.2 + i * 0.05,
     }))
-  }, [])
+  }, [isMobile])
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[100] overflow-hidden">
@@ -25,22 +25,19 @@ export function ForegroundClouds() {
         <motion.div
           key={c.id}
           className="absolute"
-          style={{ 
-            top: c.top, 
+          style={{
+            top: c.top,
             width: c.size,
             opacity: c.opacity,
-            filter: 'blur(5px)', // Desenfoque cinemático
+            willChange: 'transform',
           }}
-          initial={{ x: '-130%', y: 0 }}
-          animate={{ 
-            x: '130vw',
-            y: c.exitY // Trayectoria diagonal
-          }}
+          initial={{ x: '-130%' }}
+          animate={{ x: '130vw' }}
           transition={{
             duration: c.duration,
             repeat: Infinity,
             ease: 'linear',
-            delay: -c.delay, 
+            delay: c.delay,
           }}
         >
           <svg viewBox="0 0 200 100" fill="white">

@@ -18,6 +18,7 @@ import { EventGraphicSection } from '@/components/ui/GraphicDetails'
 import { ForegroundClouds } from '@/components/ui/ForegroundClouds'
 import { OrigamiBird } from '@/components/ui/OrigamiBird'
 import { GiftRegistry } from '@/components/GiftRegistry'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import type { GuestInfo } from '@/lib/types'
 
 function formatDate(dateStr: string): string {
@@ -50,11 +51,12 @@ export default function Home() {
     useInvitationStore()
 
   const { data, loading, error, refetch } = useSheetData()
+  const isMobile = useIsMobile()
   const { scrollYProgress } = useScroll()
 
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -100])
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, -50])
-  const y3 = useTransform(scrollYProgress, [0, 1], [0, -30])
+  const y1 = useTransform(scrollYProgress, [0, 1], isMobile ? [0, 0] : [0, -100])
+  const y2 = useTransform(scrollYProgress, [0, 1], isMobile ? [0, 0] : [0, -50])
+  const y3 = useTransform(scrollYProgress, [0, 1], isMobile ? [0, 0] : [0, -30])
 
   const [showIntro, setShowIntro] = useState(true)
   const [cloudVisible, setCloudVisible] = useState(false)
@@ -533,7 +535,7 @@ export default function Home() {
                 <FloatingBalloonHero className="w-48 h-64" />
               </div>
 
-              <motion.div style={{ y: y1 }} className="text-center space-y-4">
+              <motion.div style={{ y: y1, willChange: 'transform' }} className="text-center space-y-4">
                 <span
                   className="block text-3xl text-pink-deep"
                   style={{ fontFamily: 'var(--font-handwritten)' }}
@@ -549,11 +551,11 @@ export default function Home() {
                 </p>
               </motion.div>
 
-              <motion.div style={{ y: y2 }}>
+              <motion.div style={{ y: y2, willChange: 'transform' }}>
                 <Countdown targetIso={data.metadata.eventDate} />
               </motion.div>
 
-              <motion.div style={{ y: y3 }} className="space-y-6">
+              <motion.div style={{ y: y3, willChange: 'transform' }} className="space-y-6">
                 <EventGraphicSection
                   date={data.metadata.eventDate}
                   time={formatTime(data.metadata.eventTime)}
