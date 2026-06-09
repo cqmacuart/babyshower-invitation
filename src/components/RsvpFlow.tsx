@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Gift as GiftIcon, Banknote, Phone, Mail, User } from "lucide-react";
+import { Check, Gift as GiftIcon, Banknote, Phone, Mail, User, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Gift } from "@/lib/types";
+
+const GIFT_PAGE_SIZE = 10;
 
 export type RsvpData = {
   nombre: string;
@@ -40,8 +42,12 @@ export function RsvpFlow({
   });
   const [asistentes, setAsistentes] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [giftPage, setGiftPage] = useState(0);
 
-  const allGifts = [CASH_GIFT, ...gifts.filter((g) => g.status === 'Available')];
+  const availableGifts = gifts.filter((g) => g.status === 'Available');
+  const totalGiftPages = Math.ceil(availableGifts.length / GIFT_PAGE_SIZE);
+  const paginated = availableGifts.length > GIFT_PAGE_SIZE;
+  const pageGifts = availableGifts.slice(giftPage * GIFT_PAGE_SIZE, giftPage * GIFT_PAGE_SIZE + GIFT_PAGE_SIZE);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -72,51 +78,152 @@ export function RsvpFlow({
         <div className="mb-5 flex items-end justify-between">
           <h3 className="font-display text-2xl text-ink">Lista de regalos</h3>
           <span className="rounded-full bg-pink/20 px-3 py-1 font-mono text-xs text-pink-deep">
-            {allGifts.length - 1} disponibles
+            {availableGifts.length} disponibles
           </span>
         </div>
         <p className="mb-4 text-sm italic text-ink-soft">
           Si deseas, selecciona un detalle de la lista para llevar (opcional).
         </p>
-        <div className="grid grid-cols-2 gap-3">
-          {allGifts.map((g) => {
-            const isCash = g.id === "cash";
-            const selected = selectedGift?.id === g.id;
-            return (
-              <button
+
+        {/* Grid with floating chevrons */}
+        <div className="relative">
+          {/* Left chevron */}
+          <AnimatePresence>
+            {paginated && giftPage > 0 && (
+              <motion.button
+                key="prev"
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
                 type="button"
-                key={g.id}
-                onClick={() => setSelectedGift(selected ? null : g)}
-                className={`relative rounded-3xl border p-4 text-left transition-all active:scale-95 ${
-                  selected
-                    ? "border-lilac bg-lilac/15 shadow-md shadow-lilac/20"
-                    : "border-slate-100 bg-white shadow-sm"
-                } ${isCash ? "col-span-2 bg-butter/60" : ""}`}
+                onClick={() => setGiftPage((p) => Math.max(0, p - 1))}
+                aria-label="Página anterior"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-5 z-10 flex items-center justify-center w-9 h-9 rounded-full shadow-lg transition-transform active:scale-90"
+                style={{
+                  background: 'linear-gradient(135deg, #C9B8F5, #F5C0D0)',
+                  color: 'white',
+                  boxShadow: '0 6px 18px -4px rgba(201,184,245,0.6)',
+                }}
               >
-                {selected && (
-                  <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-lilac text-white">
-                    <Check className="h-3.5 w-3.5" />
-                  </span>
-                )}
-                <div
-                  className={`mb-3 flex h-10 w-10 items-center justify-center rounded-2xl ${
-                    isCash ? "bg-white" : "bg-mint/40"
-                  }`}
-                >
-                  {isCash ? (
-                    <Banknote className="h-5 w-5 text-pink-deep" />
-                  ) : (
-                    <GiftIcon className="h-5 w-5 text-ink" />
-                  )}
-                </div>
-                <p className="font-display text-sm text-ink">{g.title}</p>
-                {g.description && (
-                  <p className="mt-1 text-xs text-ink-soft">{g.description}</p>
-                )}
-              </button>
-            );
-          })}
+                <ChevronLeft className="w-5 h-5" />
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          {/* Right chevron */}
+          <AnimatePresence>
+            {paginated && giftPage < totalGiftPages - 1 && (
+              <motion.button
+                key="next"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                type="button"
+                onClick={() => setGiftPage((p) => Math.min(totalGiftPages - 1, p + 1))}
+                aria-label="Página siguiente"
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-5 z-10 flex items-center justify-center w-9 h-9 rounded-full shadow-lg transition-transform active:scale-90"
+                style={{
+                  background: 'linear-gradient(135deg, #C9B8F5, #F5C0D0)',
+                  color: 'white',
+                  boxShadow: '0 6px 18px -4px rgba(201,184,245,0.6)',
+                }}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={giftPage}
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -24 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="grid grid-cols-2 gap-3"
+            >
+              {pageGifts.map((g) => {
+                const selected = selectedGift?.id === g.id;
+                return (
+                  <button
+                    type="button"
+                    key={g.id}
+                    onClick={() => setSelectedGift(selected ? null : g)}
+                    className={`relative rounded-3xl border p-4 text-left transition-all active:scale-95 ${
+                      selected
+                        ? "border-lilac bg-lilac/15 shadow-md shadow-lilac/20"
+                        : "border-slate-100 bg-white shadow-sm"
+                    }`}
+                  >
+                    {selected && (
+                      <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-lilac text-white">
+                        <Check className="h-3.5 w-3.5" />
+                      </span>
+                    )}
+                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-mint/40">
+                      <GiftIcon className="h-5 w-5 text-ink" />
+                    </div>
+                    <p className="font-display text-sm text-ink">{g.title}</p>
+                    {g.description && (
+                      <p className="mt-1 text-xs text-ink-soft">{g.description}</p>
+                    )}
+                  </button>
+                );
+              })}
+            </motion.div>
+          </AnimatePresence>
         </div>
+
+        {/* Page dots */}
+        {paginated && (
+          <div className="flex justify-center gap-2 mt-5">
+            {Array.from({ length: totalGiftPages }).map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setGiftPage(i)}
+                aria-label={`Página ${i + 1}`}
+                className="rounded-full transition-all"
+                style={{
+                  width: i === giftPage ? 20 : 8,
+                  height: 8,
+                  background: i === giftPage
+                    ? 'linear-gradient(90deg, #C9B8F5, #F5C0D0)'
+                    : '#E9DFD5',
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Cash — always visible below the paginated list */}
+        {(() => {
+          const cashSelected = selectedGift?.id === 'cash';
+          return (
+            <button
+              type="button"
+              onClick={() => setSelectedGift(cashSelected ? null : CASH_GIFT)}
+              className={`mt-3 col-span-2 w-full relative rounded-3xl border p-4 text-left transition-all active:scale-95 ${
+                cashSelected
+                  ? "border-lilac bg-lilac/15 shadow-md shadow-lilac/20"
+                  : "border-slate-100 bg-butter/60 shadow-sm"
+              }`}
+            >
+              {cashSelected && (
+                <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-lilac text-white">
+                  <Check className="h-3.5 w-3.5" />
+                </span>
+              )}
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white">
+                <Banknote className="h-5 w-5 text-pink-deep" />
+              </div>
+              <p className="font-display text-sm text-ink">{CASH_GIFT.title}</p>
+              {CASH_GIFT.description && (
+                <p className="mt-1 text-xs text-ink-soft">{CASH_GIFT.description}</p>
+              )}
+            </button>
+          );
+        })()}
       </section>
 
       {/* RSVP card */}

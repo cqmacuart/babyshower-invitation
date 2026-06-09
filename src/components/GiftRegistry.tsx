@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Gift } from '@/lib/types'
 
@@ -8,6 +9,10 @@ interface GiftRegistryProps {
   onGiftSelect: (giftId: string | null) => void
   selectedGiftId: string | null
   disabled?: boolean
+  /** Cards per page (excluding cash). Pagination shown only when gifts > pageSize. Default: 10 */
+  pageSize?: number
+  /** Hide the section header (used in the confirmation view) */
+  compact?: boolean
 }
 
 const CASH_GIFT: Gift = {
@@ -32,6 +37,22 @@ function SparkleIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
       <path d="M12 2 L13.5 9.5 L21 12 L13.5 14.5 L12 22 L10.5 14.5 L3 12 L10.5 9.5 Z" />
+    </svg>
+  )
+}
+
+function ChevronLeft() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  )
+}
+
+function ChevronRight() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <polyline points="9 18 15 12 9 6" />
     </svg>
   )
 }
@@ -67,7 +88,6 @@ function GiftCard({ gift, isSelected, isCash, disabled, emoji = '🎁', onClick 
         cursor: disabled && !isSelected ? 'default' : 'pointer',
       }}
     >
-      {/* Selected glow top bar */}
       {isSelected && (
         <motion.div
           initial={{ scaleX: 0 }}
@@ -81,35 +101,25 @@ function GiftCard({ gift, isSelected, isCash, disabled, emoji = '🎁', onClick 
         />
       )}
 
-      {/* Cash badge */}
       {isCash && !disabled && (
         <span
           className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-          style={{
-            backgroundColor: '#D1FAE5',
-            color: '#065F46',
-            fontFamily: 'var(--font-clean)',
-          }}
+          style={{ backgroundColor: '#D1FAE5', color: '#065F46', fontFamily: 'var(--font-clean)' }}
         >
           Siempre disp.
         </span>
       )}
 
-      {/* Chosen badge */}
       {isSelected && disabled && (
         <span
           className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full text-white"
-          style={{
-            background: 'linear-gradient(90deg, #C9B8F5, #F5C0D0)',
-            fontFamily: 'var(--font-clean)',
-          }}
+          style={{ background: 'linear-gradient(90deg, #C9B8F5, #F5C0D0)', fontFamily: 'var(--font-clean)' }}
         >
           Tu elección ✓
         </span>
       )}
 
       <div className="flex items-center gap-3 pr-6">
-        {/* Emoji icon */}
         <motion.div
           animate={isSelected ? { rotate: [0, -8, 8, 0], scale: [1, 1.15, 1] } : {}}
           transition={{ duration: 0.5 }}
@@ -126,22 +136,15 @@ function GiftCard({ gift, isSelected, isCash, disabled, emoji = '🎁', onClick 
         </motion.div>
 
         <div className="flex-1 min-w-0">
-          <p
-            className="font-bold text-sm"
-            style={{ fontFamily: 'var(--font-clean)', color: '#4A3F6B' }}
-          >
+          <p className="font-bold text-sm" style={{ fontFamily: 'var(--font-clean)', color: '#4A3F6B' }}>
             {gift.title}
           </p>
-          <p
-            className="text-xs mt-0.5 leading-relaxed"
-            style={{ color: '#9B4F6B', fontFamily: 'var(--font-clean)' }}
-          >
+          <p className="text-xs mt-0.5 leading-relaxed" style={{ color: '#9B4F6B', fontFamily: 'var(--font-clean)' }}>
             {gift.description}
           </p>
         </div>
       </div>
 
-      {/* Animated checkmark */}
       <AnimatePresence>
         {isSelected && (
           <motion.div
@@ -158,7 +161,6 @@ function GiftCard({ gift, isSelected, isCash, disabled, emoji = '🎁', onClick 
         )}
       </AnimatePresence>
 
-      {/* Cash sparkle top-right when selected */}
       <AnimatePresence>
         {isSelected && isCash && (
           <motion.div
@@ -176,19 +178,29 @@ function GiftCard({ gift, isSelected, isCash, disabled, emoji = '🎁', onClick 
   )
 }
 
-const GIFT_EMOJIS = ['🛏️', '🛒', '🧸', '🍼', '🛁', '🎠', '🎀', '⭐', '🌟', '💫']
+const GIFT_EMOJIS = ['🛏️', '🛒', '🧸', '🍼', '🛁', '🎠', '🎀', '⭐', '🌟', '💫', '🌸', '🎵', '🦋', '🌈', '🎨']
 
 export function GiftRegistry({
   gifts,
   onGiftSelect,
   selectedGiftId,
   disabled = false,
+  pageSize = 10,
+  compact = false,
 }: GiftRegistryProps) {
+  const [page, setPage] = useState(0)
+
   const availableGifts = gifts.filter((g) => g.status === 'Available')
+  const totalPages = Math.ceil(availableGifts.length / pageSize)
+  const paginated = availableGifts.length > pageSize
+  const pageGifts = availableGifts.slice(page * pageSize, page * pageSize + pageSize)
 
   const handleSelect = (id: string) => {
     onGiftSelect(selectedGiftId === id ? null : id)
   }
+
+  const goToPrev = () => setPage((p) => Math.max(0, p - 1))
+  const goToNext = () => setPage((p) => Math.min(totalPages - 1, p + 1))
 
   return (
     <motion.div
@@ -196,32 +208,128 @@ export function GiftRegistry({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className="px-4 py-6"
+      className={compact ? 'py-2' : 'px-4 py-6'}
     >
-      {/* Section header */}
-      <div className="text-center mb-6">
-        <span
-          className="block text-3xl mb-1"
-          style={{ fontFamily: 'var(--font-handwritten)', color: '#d97706' }}
-        >
-          Un lindo gesto
-        </span>
-        <h2
-          className="text-2xl font-extrabold"
-          style={{ fontFamily: 'var(--font-serif)', color: '#4A3F6B' }}
-        >
-          Mesa de Regalos
-        </h2>
-        <p
-          className="text-xs mt-2 max-w-xs mx-auto leading-relaxed"
-          style={{ color: '#9B4F6B', fontFamily: 'var(--font-clean)' }}
-        >
-          Selecciona el detalle que deseas regalar. Cada regalo es único y especial.
-        </p>
+      {/* Section header — hidden in compact mode */}
+      {!compact && (
+        <div className="text-center mb-6">
+          <span
+            className="block text-3xl mb-1"
+            style={{ fontFamily: 'var(--font-handwritten)', color: '#d97706' }}
+          >
+            Un lindo gesto
+          </span>
+          <h2
+            className="text-2xl font-extrabold"
+            style={{ fontFamily: 'var(--font-serif)', color: '#4A3F6B' }}
+          >
+            Mesa de Regalos
+          </h2>
+          <p
+            className="text-xs mt-2 max-w-xs mx-auto leading-relaxed"
+            style={{ color: '#9B4F6B', fontFamily: 'var(--font-clean)' }}
+          >
+            Selecciona el detalle que deseas regalar. Cada regalo es único y especial.
+          </p>
+        </div>
+      )}
+
+      {/* Gift list with floating chevrons */}
+      <div className="relative">
+        {/* Left chevron */}
+        <AnimatePresence>
+          {paginated && page > 0 && (
+            <motion.button
+              key="prev"
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              type="button"
+              onClick={goToPrev}
+              aria-label="Página anterior"
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-5 z-10 flex items-center justify-center w-9 h-9 rounded-full shadow-lg transition-transform active:scale-90"
+              style={{
+                background: 'linear-gradient(135deg, #C9B8F5, #F5C0D0)',
+                color: 'white',
+                boxShadow: '0 6px 18px -4px rgba(201,184,245,0.6)',
+              }}
+            >
+              <ChevronLeft />
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        {/* Right chevron */}
+        <AnimatePresence>
+          {paginated && page < totalPages - 1 && (
+            <motion.button
+              key="next"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              type="button"
+              onClick={goToNext}
+              aria-label="Página siguiente"
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-5 z-10 flex items-center justify-center w-9 h-9 rounded-full shadow-lg transition-transform active:scale-90"
+              style={{
+                background: 'linear-gradient(135deg, #C9B8F5, #F5C0D0)',
+                color: 'white',
+                boxShadow: '0 6px 18px -4px rgba(201,184,245,0.6)',
+              }}
+            >
+              <ChevronRight />
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        {/* Cards */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={page}
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="space-y-3"
+          >
+            {pageGifts.map((gift, i) => (
+              <GiftCard
+                key={gift.id}
+                gift={gift}
+                isSelected={selectedGiftId === gift.id}
+                disabled={disabled}
+                emoji={GIFT_EMOJIS[(page * pageSize + i) % GIFT_EMOJIS.length]}
+                onClick={() => handleSelect(gift.id)}
+              />
+            ))}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      <div className="space-y-3">
-        {/* Cash gift first */}
+      {/* Page dots */}
+      {paginated && (
+        <div className="flex justify-center gap-2 mt-5">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setPage(i)}
+              aria-label={`Página ${i + 1}`}
+              className="transition-all rounded-full"
+              style={{
+                width: i === page ? 20 : 8,
+                height: 8,
+                background: i === page
+                  ? 'linear-gradient(90deg, #C9B8F5, #F5C0D0)'
+                  : '#E9DFD5',
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Cash — always visible below the paginated list */}
+      <div className="mt-3">
         <GiftCard
           gift={CASH_GIFT}
           isSelected={selectedGiftId === 'cash'}
@@ -230,18 +338,6 @@ export function GiftRegistry({
           emoji="👑"
           onClick={() => handleSelect('cash')}
         />
-
-        {/* Physical gifts */}
-        {availableGifts.map((gift, i) => (
-          <GiftCard
-            key={gift.id}
-            gift={gift}
-            isSelected={selectedGiftId === gift.id}
-            disabled={disabled}
-            emoji={GIFT_EMOJIS[i % GIFT_EMOJIS.length]}
-            onClick={() => handleSelect(gift.id)}
-          />
-        ))}
       </div>
     </motion.div>
   )

@@ -15,6 +15,7 @@ export function FloatingBalloonHero({ className = '' }: { className?: string }) 
         repeat: Infinity,
         ease: 'easeInOut',
       }}
+      style={{ width: '250px', height: '350px' }}
     >
       <svg
         viewBox="0 0 200 280"

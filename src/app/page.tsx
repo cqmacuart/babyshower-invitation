@@ -18,6 +18,7 @@ import { EventGraphicSection } from '@/components/ui/GraphicDetails'
 import { ForegroundClouds } from '@/components/ui/ForegroundClouds'
 import { OrigamiBird } from '@/components/ui/OrigamiBird'
 import { GiftRegistry } from '@/components/GiftRegistry'
+import { ThankYouScreen } from '@/components/ThankYouScreen'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import type { GuestInfo } from '@/lib/types'
 
@@ -72,6 +73,7 @@ export default function Home() {
   useEffect(() => {
     if (mode === 'celebration' || mode === 'declined') {
       setShowIntro(false)
+      window.scrollTo({ top: 0, behavior: 'instant' })
     }
   }, [mode])
 
@@ -86,6 +88,13 @@ export default function Home() {
     setTimeout(() => {
       setShowIntro(false)
       setCloudVisible(false)
+      // After the main content renders (page becomes much taller), framer-motion
+      // won't recalculate scrollYProgress until a scroll event fires. Dispatching
+      // one after the next paint forces it back to 0 so parallax starts correctly.
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: 'instant' })
+        window.dispatchEvent(new Event('scroll'))
+      })
     }, 1200)
   }, [forcePlay])
 
@@ -238,6 +247,12 @@ export default function Home() {
     return data.gifts.find((g) => g.id === selectedGiftId)?.title ?? ''
   }, [data, selectedGiftId])
 
+  const eventPassed = (() => {
+    if (!data?.metadata.eventDate) return false
+    const event = new Date(`${data.metadata.eventDate}T23:59:59`)
+    return new Date() > event
+  })()
+
   if (loading && !data) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cream">
@@ -252,6 +267,16 @@ export default function Home() {
   }
 
   if (error) return <OfflineScreen onRetry={refetch} />
+
+  if (eventPassed) {
+    return (
+      <ThankYouScreen
+        babyName={data?.metadata.babyName}
+        parentA={data?.metadata.parentA}
+        parentB={data?.metadata.parentB}
+      />
+    )
+  }
 
   const isConfirmationMode = (mode === 'celebration' || mode === 'declined') && !!guestInfo
 
@@ -465,6 +490,8 @@ export default function Home() {
                     gifts={data.gifts}
                     onGiftSelect={(id) => setPendingGiftId(id)}
                     selectedGiftId={pendingGiftId}
+                    pageSize={5}
+                    compact
                   />
                 </div>
               )}
@@ -547,7 +574,7 @@ export default function Home() {
                   <span className="text-lilac block mt-1">{data.metadata.babyName}</span>
                 </h1>
                 <p className="text-sm font-semibold uppercase tracking-widest text-ink-soft">
-                  Papás: {data.metadata.parentA} & {data.metadata.parentB}
+                  Padres: {data.metadata.parentA} & {data.metadata.parentB}
                 </p>
               </motion.div>
 

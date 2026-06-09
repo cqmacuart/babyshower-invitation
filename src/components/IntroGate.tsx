@@ -53,7 +53,7 @@ export function IntroGate({ onEnter, onOpen, babyName, parentA, parentB }: Intro
     if (phase !== 'book') return
     const t = setTimeout(() => {
       onEnter()
-    }, 4200)
+    }, 6200)
     return () => clearTimeout(t)
   }, [phase, onEnter])
 
