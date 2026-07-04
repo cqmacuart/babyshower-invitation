@@ -19,6 +19,7 @@ import { ForegroundClouds } from '@/components/ui/ForegroundClouds'
 import { OrigamiBird } from '@/components/ui/OrigamiBird'
 import { GiftRegistry } from '@/components/GiftRegistry'
 import { ThankYouScreen } from '@/components/ThankYouScreen'
+import { ParentsPhoto } from '@/components/ParentsPhoto'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import type { GuestInfo } from '@/lib/types'
 
@@ -577,6 +578,8 @@ export default function Home() {
                   Padres: {data.metadata.parentA} & {data.metadata.parentB}
                 </p>
               </motion.div>
+
+              <ParentsPhoto parentA={data.metadata.parentA} parentB={data.metadata.parentB} />
 
               <motion.div style={{ y: y2, willChange: 'transform' }}>
                 <Countdown targetIso={data.metadata.eventDate} />

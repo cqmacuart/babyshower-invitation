@@ -62,7 +62,7 @@ export function ParentsPhoto({ parentA, parentB }: ParentsPhotoProps) {
           animate={{ rotate: [-2.5, 2.5, -2.5] }}
           transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
           className="relative bg-white p-2.5 pb-10 shadow-[0_14px_28px_rgba(0,0,0,0.10)] cursor-grab active:cursor-grabbing"
-          style={{ rotate: '-3deg', width: '148px', transformOrigin: 'top center' }}
+          style={{ rotate: '-3deg', width: '248px', transformOrigin: 'top center' }}
         >
           {/* Pin */}
           <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -71,7 +71,7 @@ export function ParentsPhoto({ parentA, parentB }: ParentsPhotoProps) {
 
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '1 / 1' }}>
             <Image
-              src="/images/parents.jpg"
+              src="/images/parents.png"
               alt={`${parentA} y ${parentB}`}
               fill
               className="object-cover"
